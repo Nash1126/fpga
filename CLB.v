@@ -1,11 +1,26 @@
-`timescale 1ns/1ps
-module SwitchMatrix (
-    input  wire [3:0] in,
-    input  wire [7:0] config_bits,  // 2 bits per output
-    output wire [3:0] out
+module CLB (
+    input  wire        clk,
+    input  wire        rst,
+    input  wire [3:0]  lut_in,
+    input  wire [15:0] lut_mem,   // LUT configuration bits
+    input  wire        sel_ff,     // 0: combinational, 1: registered
+    output wire        clb_out
 );
-    assign out[0] = in[config_bits[1:0]];
-    assign out[1] = in[config_bits[3:2]];
-    assign out[2] = in[config_bits[5:4]];
-    assign out[3] = in[config_bits[7:6]];
+
+    // LUT implementation
+    wire lut_out;
+    assign lut_out = lut_mem[lut_in];
+
+    // D Flip-Flop
+    reg ff_q;
+    always @(posedge clk or posedge rst) begin
+        if (rst)
+            ff_q <= 1'b0;
+        else
+            ff_q <= lut_out;
+    end
+
+    // Output select
+    assign clb_out = sel_ff ? ff_q : lut_out;
+
 endmodule
